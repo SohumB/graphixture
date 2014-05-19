@@ -1,0 +1,19 @@
+{
+  "name": "graphixture",
+  "main": "fixtures.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "devDependencies": {
+    "chai-as-promised": "^4.1.1",
+    "chai": "^1.9.1",
+    "mocha": "^1.18.2",
+    "bookshelf": "^0.6.10",
+    "sequelize": "^1.7.5",
+    "pg": "^3.1.0"
+  },
+  "dependencies": {
+    "bluebird": "^1.2.4",
+    "lodash": "^2.4.1"
+  }
+}
