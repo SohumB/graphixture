@@ -1,14 +1,15 @@
 var Fixtures = require('./fixtures');
 var _ = require('lodash');
 var Promise = require('bluebird');
+var util = require('util');
 
-/*
+/**
  * @constructor
  * @implements {Fixtures.Adapter}
  */
 var adapter = {};
 
-/*
+/**
  * @param {Bookshelf.Model} model
  * @return {function(string): Bookshelf.Model}
  */
@@ -22,26 +23,25 @@ adapter.associations = function(model) {
   };
 };
 
-/*
+/**
  * @param {Bookshelf} db
  * @param {Bookshelf.Model} model
  * @return {Promise}
  */
 adapter.truncate = function(db, model) {
   // minor hack warning, warning
-  return db.knex.raw('truncate ' +
-                     db.knex.client.grammar.wrapTable(model.prototype.tableName)
-                    + ' cascade');
+  return db.knex.raw(util.format('truncate %s cascade',
+    db.knex.client.grammar.wrapTable(model.prototype.tableName)
+  ));
 };
 
 
-/*
+/**
  * @param {Bookshelf} db
  * @param {Bookshelf.Model} model
  * @param {Object} instance
  * @param {Object.<string, Object>} assocs
  * @param {Object.<string, Promise.<!Bookshelf.Model>>} incoming
-
  * @return {Promise.<!Bookshelf.Model>}
  */
 adapter.create = function(db, model, data, assocs, incoming) {
@@ -51,22 +51,22 @@ adapter.create = function(db, model, data, assocs, incoming) {
     return linked.then(function(linkedObjs) {
       switch (assoc.association.type) {
         case 'belongsTo':
-        var toSet = {};
-        toSet[assoc.association.foreignKey] = linkedObjs.id;
-        base.set(toSet);
-        return undefined;
-        break;
+          var toSet = {};
+          toSet[assoc.association.foreignKey] = linkedObjs.id;
+          base.set(toSet);
+          return undefined;
+          break;
         case 'belongsToMany':
-        return function(saved) { return saved.related(assoc.name).attach(linkedObjs); };
-        break;
+          return function(saved) { return saved.related(assoc.name).attach(linkedObjs); };
+          break;
         case 'hasMany':
         case 'hasOne':
-        // untested
-        return function(saved) { return saved.related(assoc.name).set(linkedObjs); };
+          // untested
+          return function(saved) { return saved.related(assoc.name).set(linkedObjs); };
         break;
         default:
-        var msg = 'bookshelf.adapter does not know how to associate a ' + assoc.association.type + ' relation';
-        return Promise.reject(new Error(msg));
+          var msg = 'bookshelf.adapter does not know how to associate a ' + assoc.association.type + ' relation';
+          return Promise.reject(new Error(msg));
       }
     });
   });

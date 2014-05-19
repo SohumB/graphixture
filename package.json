@@ -10,7 +10,8 @@
     "mocha": "^1.18.2",
     "bookshelf": "^0.6.10",
     "sequelize": "^1.7.5",
-    "pg": "^3.1.0"
+    "pg": "^3.1.0",
+    "config-node": "^1.1.0"
   },
   "dependencies": {
     "bluebird": "^1.2.4",

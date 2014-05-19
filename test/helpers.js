@@ -2,16 +2,10 @@ var Sequelize = require('sequelize');
 var Bookshelf = require('bookshelf');
 var _ = require('lodash');
 var Promise = require('bluebird');
+var Config = require('config-node');
 
 var loadSequelize = require( './models/sequelize' );
 var loadBookshelf = require( './models/bookshelf' );
-
-var Config = {
-  user: 'postgres',
-  password: 'postgres',
-  database: 'sequelize_test',
-  host: 'localhost'
-};
 
 var sequelize = {
   db: null,

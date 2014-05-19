@@ -32,7 +32,7 @@ adapter.truncate = function(db, model) {
   // major hack warning, warning
   var quote = db.options.dialect === 'postgres' || db.options.dialect === 'sqlite' ? '"' : '`';
   return Promise.cast(db.query('TRUNCATE ' + quote + model.tableName + quote + ' CASCADE;'));
-//  return Promise.cast(model.destroy({}, { truncate: true }));
+  // this will hopefully become: return Promise.cast(model.destroy({}, { truncate: true, cascade: true }));
 };
 
 

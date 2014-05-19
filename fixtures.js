@@ -3,21 +3,21 @@ var _ = require( 'lodash' );
 
 var exports;
 
-/*
+/**
  * Adapters for different ORMs
  * @interface
  * @template Model
  */
 exports.Adapter = function Adapter() {};
 
-/*
+/**
  * Adapter function to retrieve a name -> model mapping
  * @param {Model} model - The model to retrieve associations for
  * @return {function(string): Model.Association} An object mapping potential names used in fixtures to associations
  */
 exports.Adapter.prototype.associations = function(model) {};
 
-/*
+/**
  * Adapter function to destroy a table's data
  * @param {?} db - Database instance, for additional hackery if need be
  * @param {Model} model - The model to destroy the table for
@@ -25,7 +25,7 @@ exports.Adapter.prototype.associations = function(model) {};
  */
 exports.Adapter.prototype.truncate = function(db, model) {};
 
-/*
+/**
  * Adapter function to create, touching the database, an instance
  * @param {?} db - Database instance, for additional hackery if need be
  * @param {Model} model - The model to create a row on
@@ -36,7 +36,7 @@ exports.Adapter.prototype.truncate = function(db, model) {};
  */
 exports.Adapter.prototype.create = function(db, model, instance, assocs, incoming) {};
 
-/*
+/**
  * @constructor
  * @template Model
  * @param {?} db - Database instance, for additional hackery if need be
@@ -51,7 +51,7 @@ exports.Fixtures = function Fixtures(db, models, adapter) {
   return this;
 };
 
-/*
+/**
  * Build promise dependency graph with late binding
  * @param {Array.<{name: string, fn: function(Object.<string, A>):A, dependencies: Array.<string>, built: bool}>} tasks
  * @return {<Object.<string, Promise.<A>>}
@@ -78,8 +78,7 @@ exports.buildGraph = function(tasks) {
   return results;
 };
 
-
-/*
+/**
  * Load fixtures from a fixtures object
  * @param {Object.<string, Object.<string, Object.<string, ?>>>} fixtures
  * @return {Promise.<Object.<string, !Model>>}
@@ -91,8 +90,6 @@ exports.Fixtures.prototype.load = function loadFixtures(fixtures) {
 
   _.forEach(cloned, function(rows, modelName) {
     var model = self.models[modelName];
-
-    /** @type Object.<string, Model> **/
 
     var modelAssociations = self.adapter.associations(model);
 
@@ -130,7 +127,8 @@ exports.Fixtures.prototype.load = function loadFixtures(fixtures) {
 
   return Promise.props(exports.buildGraph(tasks));
 };
-/*
+
+/**
  * Clear all tables in the list of models provided
  * @return {Promise}
  */
@@ -142,7 +140,7 @@ exports.Fixtures.prototype.clear = function clearFixtures() {
   return Promise.all(tasks);
 };
 
-/*
+/**
  * Sequence calls to clear and load
  * @param {Object.<string, Object.<string, Object.<string, ?>>>} data
  * @return {Promise.<Object.<string, !Model>>}
