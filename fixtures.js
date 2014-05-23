@@ -134,10 +134,9 @@ exports.Fixtures.prototype.load = function loadFixtures(fixtures) {
  */
 exports.Fixtures.prototype.clear = function clearFixtures() {
   var self = this;
-  var tasks = _.map(self.models, function(model) {
+  return Promise.reduce(_.values(self.models), function(accum, model) {
     return self.adapter.truncate(self.db, model);
-  });
-  return Promise.all(tasks);
+  }, 0);
 };
 
 /**
