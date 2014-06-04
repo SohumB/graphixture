@@ -72,7 +72,7 @@ adapter.create = function(db, model, data, assocs, incoming) {
   });
   return Promise.all(deps).bind({}).then(function(depArr) {
     this.asyncDeps = _.compact(depArr);
-    return base.save();
+    return base.save({}, { method: 'insert' });
   }).then(function(saved) {
     return Promise.map(this.asyncDeps, function(fn) { return fn(saved); });
   }).return(base);
