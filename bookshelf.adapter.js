@@ -30,9 +30,18 @@ adapter.associations = function(model) {
  */
 adapter.truncate = function(db, model) {
   // minor hack warning, warning
-  return db.knex.raw(util.format('truncate %s cascade',
-    db.knex.client.grammar.wrapTable(model.prototype.tableName)
-  ));
+  var client = db.knex.client;
+  var unwrapped = model.prototype.tableName;
+
+  var wrap;
+  if (client.grammar) { // old version of knex
+    wrap = client.grammar.wrapTable.bind(client.grammar);
+  } else {
+    var fmt = new client.Formatter();
+    wrap = fmt.wrap.bind(fmt);
+  }
+
+  return db.knex.raw(util.format('truncate %s cascade', wrap(unwrapped)));
 };
 
 
