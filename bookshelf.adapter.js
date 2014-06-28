@@ -23,27 +23,46 @@ adapter.associations = function(model) {
   };
 };
 
+function getWrap(db) {
+  // minor hack warning, warning
+  var client = db.knex.client;
+
+  if (client.grammar) { // old version of knex
+    return client.grammar.wrapTable.bind(client.grammar);
+  } else {
+    var fmt = new client.Formatter();
+    return fmt.wrap.bind(fmt);
+  }
+}
+
 /**
  * @param {Bookshelf} db
- * @param {Bookshelf.Model} model
+ * @param {Bookshelf.Model|Array.<Bookshelf.Model>} model
  * @return {Promise}
  */
 adapter.truncate = function(db, model) {
-  // minor hack warning, warning
-  var client = db.knex.client;
-  var unwrapped = model.prototype.tableName;
+  var wrap = getWrap(db);
+  var process = function(model) { return wrap(model.prototype.tableName); };
 
-  var wrap;
-  if (client.grammar) { // old version of knex
-    wrap = client.grammar.wrapTable.bind(client.grammar);
-  } else {
-    var fmt = new client.Formatter();
-    wrap = fmt.wrap.bind(fmt);
-  }
-
-  return db.knex.raw(util.format('truncate %s cascade', wrap(unwrapped)));
+  var names = _.isArray(model) ? _.map(model, process).join(", ") : process(model);
+  return db.knex.raw(util.format('truncate %s cascade', names));
 };
 
+/**
+ * @param {Bookshelf} db
+ * @return {Promise}
+ */
+adapter.beginTransaction = function(db) {
+  return db.knex.raw('begin;');
+};
+
+/**
+ * @param {Bookshelf} db
+ * @return {Promise}
+ */
+adapter.rollbackTransaction = function(db) {
+  return db.knex.raw('rollback;');
+};
 
 /**
  * @param {Bookshelf} db

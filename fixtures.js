@@ -20,10 +20,24 @@ exports.Adapter.prototype.associations = function(model) {};
 /**
  * Adapter function to destroy a table's data
  * @param {?} db - Database instance, for additional hackery if need be
- * @param {Model} model - The model to destroy the table for
+ * @param {Model|Array.<Model>} model - The model to destroy the table for
  * @return {Promise} A promise just for success/failure
  */
 exports.Adapter.prototype.truncate = function(db, model) {};
+
+/**
+ * Adapter function to begin a transaction on the current connection
+ * @param {?} db - Database instance, for adapter-specific behaviour
+ * @return {Promise} A promise just for success/failure
+ */
+exports.Adapter.prototype.beginTransaction = function(db) {};
+
+/**
+ * Adapter function to rollback a transaction on the current connection
+ * @param {?} db - Database instance, for adapter-specific behaviour
+ * @return {Promise} A promise just for success/failure
+ */
+exports.Adapter.prototype.rollbackTransaction = function(db) {};
 
 /**
  * Adapter function to create, touching the database, an instance
@@ -44,10 +58,14 @@ exports.Adapter.prototype.create = function(db, model, instance, assocs, incomin
  * @param {Adapter.<Model>} adapter
  * @return {Fixtures.<Model>}
  */
-exports.Fixtures = function Fixtures(db, models, adapter) {
+exports.Fixtures = function Fixtures(db, models, adapter, options) {
   this.db = db;
   this.models = models;
   this.adapter = adapter;
+  this.options = options || {};
+  _.defaults(this.options, {
+    clearStrategy: 'truncateIndividually'
+  });
   return this;
 };
 
@@ -130,13 +148,46 @@ exports.Fixtures.prototype.load = function loadFixtures(fixtures) {
 
 /**
  * Clear all tables in the list of models provided
+ * Truncate tables individually, waiting on each return
  * @return {Promise}
  */
-exports.Fixtures.prototype.clear = function clearFixtures() {
+exports.Fixtures.prototype.truncateIndividually = function truncateIndividually() {
   var self = this;
   return Promise.reduce(_.values(self.models), function(accum, model) {
     return self.adapter.truncate(self.db, model);
   }, 0);
+};
+
+/**
+ * Clear all tables in the list of models provided
+ * Truncate all tables at once
+ * @return {Promise}
+ */
+exports.Fixtures.prototype.truncateAll = function truncateAll() {
+  return this.adapter.truncate(this.db, _.values(this.models));
+};
+
+/**
+ * Use rollbacks for database clearing.
+ * Assumes only one database connection
+ * We don't track state, so every call of clear() just becomes a "rollback; begin;" call
+ * So we ignore errors on the "rollback;" line, for the first time it's called
+ * @return {Promise}
+ */
+exports.Fixtures.prototype.rollback = function rollback() {
+  var self = this;
+  var begin = function() { return self.adapter.beginTransaction(self.db); };
+
+  return self.adapter.rollbackTransaction(self.db).then(begin, begin);
+};
+
+/**
+ * Clear all tables in the list of models provided
+ * Dispatches based on `this.options.clearStrategy`
+ * @return {Promise}
+ */
+exports.Fixtures.prototype.clear = function clearFixtures() {
+  return this[this.options.clearStrategy].call(this);
 };
 
 /**

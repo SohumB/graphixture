@@ -2,13 +2,13 @@ var Fixtures = require('./fixtures');
 var _ = require('lodash');
 var Promise = require('bluebird');
 
-/*
+/**
  * @constructor
  * @implements {Fixtures.Adapter}
  */
 var adapter = {};
 
-/*
+/**
  * @param {Sequelize.Model} model
  * @return {function(string): Sequelize.Model}
  */
@@ -23,7 +23,7 @@ adapter.associations = function(model) {
   };
 };
 
-/*
+/**
  * @param {Sequelize} db
  * @param {Sequelize.Model} model
  * @return {Promise}
@@ -31,12 +31,31 @@ adapter.associations = function(model) {
 adapter.truncate = function(db, model) {
   // major hack warning, warning
   var quote = db.options.dialect === 'postgres' || db.options.dialect === 'sqlite' ? '"' : '`';
-  return Promise.cast(db.query('TRUNCATE ' + quote + model.tableName + quote + ' CASCADE;'));
+  var process = function(model) { return quote + model.tableName + quote; };
+
+  var names = _.isArray(model) ? _.map(model, process).join(", ") : process(model);
+  return Promise.cast(db.query('TRUNCATE ' + names + ' CASCADE;'));
   // this will hopefully become: return Promise.cast(model.destroy({}, { truncate: true, cascade: true }));
 };
 
+/**
+ * @param {Sequelize} db
+ * @return {Promise}
+ */
+adapter.beginTransaction = function(db) {
+  return Promise.cast(db.query('BEGIN;'));
+};
 
-/*
+/**
+ * @param {Sequelize} db
+ * @return {Promise}
+ */
+adapter.rollbackTransaction = function(db) {
+  return Promise.cast(db.query('ROLLBACK;'));
+};
+
+
+/**
  * @param {Sequelize} db
  * @param {Sequelize.Model} model
  * @param {Object} instance
