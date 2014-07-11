@@ -42,10 +42,14 @@ function getWrap(db) {
  */
 adapter.truncate = function(db, model) {
   var wrap = getWrap(db);
-  var process = function(model) { return wrap(model.prototype.tableName); };
+  var getTables = function(model) { return model.prototype.underlyingTables ||
+                             [model.prototype.tableName]; };
+  var process = function(name) { return wrap(name); };
 
-  var names = _.isArray(model) ? _.map(model, process).join(", ") : process(model);
-  return db.knex.raw(util.format('truncate %s cascade', names));
+  model = _.isArray(model) ? model : [model];
+  var tableNames = _(model).map(getTables).flatten().map(process).value();
+
+  return db.knex.raw(util.format('truncate %s cascade', tableNames.join(", ")));
 };
 
 /**
