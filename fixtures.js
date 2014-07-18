@@ -102,8 +102,15 @@ exports.buildGraph = function(tasks) {
  * @return {Promise.<Object.<string, !Model>>}
  */
 exports.Fixtures.prototype.load = function loadFixtures(fixtures) {
+  var delegateClone = function(obj) {
+    if (obj && _.isFunction(obj.clone)) {
+      return obj.clone();
+    }
+    return undefined;
+  };
+
   var tasks = [];
-  var cloned = _.cloneDeep(fixtures);
+  var cloned = _.cloneDeep(fixtures, delegateClone);
   var self = this;
 
   _.forEach(cloned, function(rows, modelName) {
@@ -116,7 +123,7 @@ exports.Fixtures.prototype.load = function loadFixtures(fixtures) {
 
       // This is one specific row, on the Model table
       /** @type Object.<string, ?> **/
-      var data = _.cloneDeep(row);
+      var data = _.cloneDeep(row, delegateClone);
 
       // Find any fields that need to be set via associations
       // Remove them from the data we create, so as to not try to set them directly
