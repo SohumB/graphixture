@@ -109,6 +109,13 @@ exports.Fixtures.prototype.load = function loadFixtures(fixtures) {
     return undefined;
   };
 
+  var allDependencies = function(obj) {
+    if (_.isString(obj)) { return obj; }
+    if (_.isArray(obj)) { return _.flatten(_.map(obj, allDependencies)); }
+    if (_.isPlainObject(obj)) { return allDependencies(_.values(obj)); }
+    return [];
+  };
+
   var tasks = [];
   var cloned = _.cloneDeep(fixtures, delegateClone);
   var self = this;
@@ -133,7 +140,8 @@ exports.Fixtures.prototype.load = function loadFixtures(fixtures) {
           assocs.push({
             isMulti: _.isArray(fieldData),
             association: assocObj,
-            dependencies: fieldData,
+            dependencies: allDependencies(fieldData),
+            data: fieldData,
             name: fieldName
           });
           delete data[fieldName];

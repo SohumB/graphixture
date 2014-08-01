@@ -68,6 +68,22 @@ adapter.rollbackTransaction = function(db) {
   return db.knex.raw('rollback;');
 };
 
+
+function extractId(thing) {
+  if (thing && _.isFunction(thing.get) && thing.get('id')) { return thing.get('id'); }
+  if (thing && thing.id) { return thing.id; }
+  return thing;
+};
+
+function deepReplace(replaceWith) {
+  return function(thing) {
+    if (_.isString(thing) && replaceWith[thing]) { return extractId(replaceWith[thing]); }
+    if (_.isArray(thing)) { return _.map(thing, deepReplace(replaceWith)); }
+    if (_.isPlainObject(thing)) { return _.mapValues(thing, deepReplace(replaceWith)); }
+    return thing;
+  };
+}
+
 /**
  * @param {Bookshelf} db
  * @param {Bookshelf.Model} model
@@ -78,30 +94,35 @@ adapter.rollbackTransaction = function(db) {
  */
 adapter.create = function(db, model, data, assocs, incoming) {
   var base = model.forge(data);
-  var deps = _.map(assocs, function(assoc) {
-    var linked = assoc.isMulti ? Promise.all(_.at(incoming, assoc.dependencies)) : incoming[assoc.dependencies];
-    return linked.then(function(linkedObjs) {
+  var deps = _.compact(_.map(assocs, function(assoc) {
+    var depPromises = _.pick(incoming, assoc.dependencies);
+    if (_.isEmpty(depPromises)) { return undefined; }
+    return Promise.props(_.pick(incoming, assoc.dependencies)).then(function(linked) {
       switch (assoc.association.type) {
         case 'belongsTo':
           var toSet = {};
-          toSet[assoc.association.foreignKey] = linkedObjs.id;
+          toSet[assoc.association.foreignKey] = extractId(linked[assoc.dependencies]);
           base.set(toSet);
           return undefined;
           break;
         case 'belongsToMany':
-          return function(saved) { return saved.related(assoc.name).attach(linkedObjs); };
+          return function(saved) {
+            var toAttach = _.map(assoc.data, deepReplace(linked));
+            return saved.related(assoc.name).attach(toAttach);
+          };
           break;
         case 'hasMany':
         case 'hasOne':
           // untested
-          return function(saved) { return saved.related(assoc.name).set(linkedObjs); };
+          return function(saved) { return saved.related(assoc.name)
+                            .set(_.pick(linked, assoc.dependencies)); };
         break;
         default:
           var msg = 'bookshelf.adapter does not know how to associate a ' + assoc.association.type + ' relation';
           return Promise.reject(new Error(msg));
       }
     });
-  });
+  }));
   return Promise.all(deps).bind({}).then(function(depArr) {
     this.asyncDeps = _.compact(depArr);
     return base.save({}, { method: 'insert' });
