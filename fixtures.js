@@ -77,6 +77,7 @@ exports.Fixtures = function Fixtures(db, models, adapter, options) {
 exports.buildGraph = function(tasks) {
   var results = {};
   var undone = tasks.length;
+  var lastUndone = undone;
 
   // essentially, we loop through the task list continuously,
   // looking for things whose dependency promises have been built
@@ -91,6 +92,12 @@ exports.buildGraph = function(tasks) {
   }
   while (undone > 0) {
     _.each(tasks, buildTask);
+    if (undone === lastUndone) {
+      var unbuilt = _(tasks).filter(function(task) { return !task.built; }).map('name').value();
+      throw new Error('Unsatisfiable dependency in fixture graph ' +
+          '(unresolved tasks: ' + unbuilt.join(', ') + ')');
+    }
+    lastUndone = undone;
   }
 
   return results;
