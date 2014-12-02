@@ -10,13 +10,13 @@ var util = require('util');
 var adapter = {};
 
 /**
- * @param {Bookshelf.Model} model
+ * @param {Bookshelf.Model} Model
  * @return {function(string): Bookshelf.Model}
  */
-adapter.associations = function(model) {
+adapter.associations = function(Model) {
   return function(name) {
-    if (_.isFunction(model.prototype[name])) {
-      var result = model.forge({})[name]();
+    if (_.isFunction(Model.prototype[name])) {
+      var result = Model.forge({})[name]();
       if (result.relatedData) { return result.relatedData; }
     }
     return undefined;
@@ -86,14 +86,14 @@ function deepReplace(replaceWith) {
 
 /**
  * @param {Bookshelf} db
- * @param {Bookshelf.Model} model
+ * @param {Bookshelf.Model} Model
  * @param {Object} instance
  * @param {Object.<string, Object>} assocs
  * @param {Object.<string, Promise.<!Bookshelf.Model>>} incoming
  * @return {Promise.<!Bookshelf.Model>}
  */
-adapter.create = function(db, model, data, assocs, incoming) {
-  var base = model.forge(data);
+adapter.create = function(db, Model, data, assocs, incoming) {
+  var base = Model.forge(data);
   var deps = _.compact(_.map(assocs, function(assoc) {
     var depPromises = _.pick(incoming, assoc.dependencies);
     if (_.isEmpty(depPromises)) { return undefined; }
@@ -104,21 +104,19 @@ adapter.create = function(db, model, data, assocs, incoming) {
           toSet[assoc.association.foreignKey] = extractId(linked[assoc.dependencies]);
           base.set(toSet);
           return undefined;
-          break;
         case 'belongsToMany':
           return function(saved) {
             var toAttach = _.map(assoc.data, deepReplace(linked));
             return saved.related(assoc.name).attach(toAttach);
           };
-          break;
         case 'hasMany':
         case 'hasOne':
           // untested
           return function(saved) { return saved.related(assoc.name)
                             .set(_.pick(linked, assoc.dependencies)); };
-        break;
         default:
-          var msg = 'bookshelf.adapter does not know how to associate a ' + assoc.association.type + ' relation';
+          var msg = 'bookshelf.adapter does not know how to associate a '
+              + assoc.association.type + ' relation';
           return Promise.reject(new Error(msg));
       }
     });
