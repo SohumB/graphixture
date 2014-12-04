@@ -1,7 +1,7 @@
 var Sequelize = require('sequelize');
 var Bookshelf = require('bookshelf');
 var _ = require('lodash');
-var Promise = require('bluebird');
+var Bluebird = require('bluebird');
 var Config = require('config-node');
 
 var loadSequelize = require( './models/sequelize' );
@@ -18,7 +18,7 @@ var sequelize = {
       dialect: 'postgres'
     });
 
-    return Promise.cast(sequelize.db.authenticate()).then(function() {
+    return Bluebird.cast(sequelize.db.authenticate()).then(function() {
       sequelize.models = loadSequelize(sequelize.db, Sequelize);
       return sequelize.db.sync({force: true});
     });

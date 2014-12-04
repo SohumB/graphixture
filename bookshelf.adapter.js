@@ -1,6 +1,6 @@
 var Fixtures = require('./fixtures');
 var _ = require('lodash');
-var Promise = require('bluebird');
+var Bluebird = require('bluebird');
 var util = require('util');
 
 /**
@@ -68,12 +68,9 @@ adapter.rollbackTransaction = function(db) {
   return db.knex.raw('rollback;');
 };
 
-
 function extractId(thing) {
-  if (thing && _.isFunction(thing.get) && thing.get('id')) { return thing.get('id'); }
-  if (thing && thing.id) { return thing.id; }
-  return thing;
-};
+  return (thing && thing.id) || thing;
+}
 
 function deepReplace(replaceWith) {
   return function(thing) {
@@ -97,7 +94,7 @@ adapter.create = function(db, Model, data, assocs, incoming) {
   var deps = _.compact(_.map(assocs, function(assoc) {
     var depPromises = _.pick(incoming, assoc.dependencies);
     if (_.isEmpty(depPromises)) { return undefined; }
-    return Promise.props(_.pick(incoming, assoc.dependencies)).then(function(linked) {
+    return Bluebird.props(_.pick(incoming, assoc.dependencies)).then(function(linked) {
       switch (assoc.association.type) {
         case 'belongsTo':
           var toSet = {};
@@ -117,15 +114,15 @@ adapter.create = function(db, Model, data, assocs, incoming) {
         default:
           var msg = 'bookshelf.adapter does not know how to associate a '
               + assoc.association.type + ' relation';
-          return Promise.reject(new Error(msg));
+          return Bluebird.reject(new Error(msg));
       }
     });
   }));
-  return Promise.all(deps).bind({}).then(function(depArr) {
+  return Bluebird.all(deps).bind({}).then(function(depArr) {
     this.asyncDeps = _.compact(depArr);
     return base.save({}, { method: 'insert' });
   }).then(function(saved) {
-    return Promise.map(this.asyncDeps, function(fn) { return fn(saved); });
+    return Bluebird.map(this.asyncDeps, function(fn) { return fn(saved); });
   }).return(base);
 };
 

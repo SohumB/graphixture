@@ -1,5 +1,5 @@
 var _ = require('lodash');
-var Promise = require('bluebird');
+var Bluebird = require('bluebird');
 var util = require('util');
 
 var helpers = require('./helpers');
@@ -35,7 +35,7 @@ describe('Bookshelf tests', function() {
       return bk.db.knex('catalogGroup').count('*');
     });
 
-    return Promise.all([
+    return Bluebird.all([
       firstCount.should.eventually.deep.equal([ { count: '2' } ]),
       secondCount.should.eventually.deep.equal([ { count: '0' } ])
     ]);

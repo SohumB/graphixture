@@ -1,7 +1,5 @@
-var Promise = require( 'bluebird' );
+var Bluebird = require( 'bluebird' );
 var _ = require( 'lodash' );
-
-var exports;
 
 /**
  * Adapters for different ORMs
@@ -72,10 +70,12 @@ exports.Fixtures = function Fixtures(db, models, adapter, options) {
 /**
  * Build promise dependency graph with late binding
  * @param {Array.<{name: string, fn: function(Object.<string, A>):A, dependencies: Array.<string>, built: bool}>} tasks
+ * @param {<Object.<string, !Model>>} [results] Optionally provide an object with the same
+ * data structure as the return type of #load, allows the fixture graph to be added to.
  * @return {<Object.<string, Promise.<A>>}
  */
-exports.buildGraph = function(tasks) {
-  var results = {};
+exports.buildGraph = function(tasks, results) {
+  results = results || {};
   var undone = tasks.length;
   var lastUndone = undone;
 
@@ -106,9 +106,11 @@ exports.buildGraph = function(tasks) {
 /**
  * Load fixtures from a fixtures object
  * @param {Object.<string, Object.<string, Object.<string, ?>>>} fixtures
+ * @param {<Object.<string, !Model>>} [results] Optionally provide an object with the same
+ * data structure as the return type, allows the fixture graph to be added to.
  * @return {Promise.<Object.<string, !Model>>}
  */
-exports.Fixtures.prototype.load = function loadFixtures(fixtures) {
+exports.Fixtures.prototype.load = function loadFixtures(fixtures, results) {
   var delegateClone = function(obj) {
     if (obj && _.isFunction(obj.clone)) {
       return obj.clone();
@@ -165,7 +167,7 @@ exports.Fixtures.prototype.load = function loadFixtures(fixtures) {
     });
   });
 
-  return Promise.props(exports.buildGraph(tasks));
+  return Bluebird.props(exports.buildGraph(tasks, results));
 };
 
 /**
@@ -175,7 +177,7 @@ exports.Fixtures.prototype.load = function loadFixtures(fixtures) {
  */
 exports.Fixtures.prototype.truncateIndividually = function truncateIndividually() {
   var self = this;
-  return Promise.reduce(_.values(self.models), function(accum, model) {
+  return Bluebird.reduce(_.values(self.models), function(accum, model) {
     return self.adapter.truncate(self.db, model);
   }, 0);
 };
@@ -215,13 +217,13 @@ exports.Fixtures.prototype.clear = function clearFixtures() {
 /**
  * Sequence calls to clear and load
  * @param {Object.<string, Object.<string, Object.<string, ?>>>} data
+ * @param {<Object.<string, !Model>>} [results] Optionally provide an object with the same
+ * data structure as the return type, allows the fixture graph to be added to.
  * @return {Promise.<Object.<string, !Model>>}
  */
-exports.Fixtures.prototype.clearAndLoad = function clearAndLoadFixtures(data) {
+exports.Fixtures.prototype.clearAndLoad = function clearAndLoadFixtures(data, results) {
   var self = this;
   return self.clear().then(function() {
-    return self.load(data);
+    return self.load(data, results);
   });
 };
-
-module.exports = exports;
