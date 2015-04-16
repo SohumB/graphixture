@@ -1,6 +1,11 @@
 {
   "name": "graphixture",
   "main": "graphixture.js",
+  "version": "1.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SohumB/graphixture"
+  },
   "scripts": {
     "test": "mocha"
   },
