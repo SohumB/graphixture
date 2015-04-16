@@ -1,10 +1,10 @@
-var Fixtures = require('./fixtures');
+var Adapter = require('./graphixture').Adapter;
 var _ = require('lodash');
 var Promise = require('bluebird');
 
 /**
  * @constructor
- * @implements {Fixtures.Adapter}
+ * @implements {Adapter}
  */
 var adapter = {};
 

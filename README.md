@@ -1,16 +1,14 @@
-# fixtures.js
-
 ## Usage
 
 To use, you need an adapter. Sequelize and Bookshelf adapters are provided.
 
-    var adapter = require('modules/fixtures/bookshelf.adapter');
+    var adapter = require('graphixture/bookshelf.adapter');
 
 Then, initialize the Fixtures object with a reference to Bookshelf, a list of models, and the adapter.
 
     var Bookshelf = require('bookshelf').DB;
-    var Fixtures = require('modules/fixtures).Fixtures;
-    var fixtures = new Fixtures(Bookshelf, Bookshelf.models, adapter);
+    var Graphixture = require('graphixture').Graphixture;
+    var fixtures = new Graphixture(Bookshelf, Bookshelf.models, adapter);
 
 Now you can load a fixture graph that looks like this, assuming the relationships are correctly drawn up in your models:
 

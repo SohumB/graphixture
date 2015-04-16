@@ -1,6 +1,6 @@
 {
   "name": "graphixture",
-  "main": "fixtures.js",
+  "main": "graphixture.js",
   "scripts": {
     "test": "mocha"
   },

@@ -54,9 +54,9 @@ exports.Adapter.prototype.create = function(db, model, instance, assocs, incomin
  * @param {?} db - Database instance, for additional hackery if need be
  * @param {Object.<string, Model>} models
  * @param {Adapter.<Model>} adapter
- * @return {Fixtures.<Model>}
+ * @return {Graphixture.<Model>}
  */
-exports.Fixtures = function Fixtures(db, models, adapter, options) {
+exports.Graphixture = function Graphixture(db, models, adapter, options) {
   this.db = db;
   this.models = models;
   this.adapter = adapter;
@@ -110,7 +110,7 @@ exports.buildGraph = function(tasks, results) {
  * data structure as the return type, allows the fixture graph to be added to.
  * @return {Promise.<Object.<string, !Model>>}
  */
-exports.Fixtures.prototype.load = function loadFixtures(fixtures, results) {
+exports.Graphixture.prototype.load = function loadGraphixture(fixtures, results) {
   var delegateClone = function(obj) {
     if (obj && _.isFunction(obj.clone)) {
       return obj.clone();
@@ -175,7 +175,7 @@ exports.Fixtures.prototype.load = function loadFixtures(fixtures, results) {
  * Truncate tables individually, waiting on each return
  * @return {Promise}
  */
-exports.Fixtures.prototype.truncateIndividually = function truncateIndividually() {
+exports.Graphixture.prototype.truncateIndividually = function truncateIndividually() {
   var self = this;
   return Bluebird.reduce(_.values(self.models), function(accum, model) {
     return self.adapter.truncate(self.db, model);
@@ -187,7 +187,7 @@ exports.Fixtures.prototype.truncateIndividually = function truncateIndividually(
  * Truncate all tables at once
  * @return {Promise}
  */
-exports.Fixtures.prototype.truncateAll = function truncateAll() {
+exports.Graphixture.prototype.truncateAll = function truncateAll() {
   return this.adapter.truncate(this.db, _.values(this.models));
 };
 
@@ -198,7 +198,7 @@ exports.Fixtures.prototype.truncateAll = function truncateAll() {
  * So we ignore errors on the "rollback;" line, for the first time it's called
  * @return {Promise}
  */
-exports.Fixtures.prototype.rollback = function rollback() {
+exports.Graphixture.prototype.rollback = function rollback() {
   var self = this;
   var begin = function() { return self.adapter.beginTransaction(self.db); };
 
@@ -210,7 +210,7 @@ exports.Fixtures.prototype.rollback = function rollback() {
  * Dispatches based on `this.options.clearStrategy`
  * @return {Promise}
  */
-exports.Fixtures.prototype.clear = function clearFixtures() {
+exports.Graphixture.prototype.clear = function clearFixtures() {
   return this[this.options.clearStrategy].call(this);
 };
 
@@ -221,7 +221,7 @@ exports.Fixtures.prototype.clear = function clearFixtures() {
  * data structure as the return type, allows the fixture graph to be added to.
  * @return {Promise.<Object.<string, !Model>>}
  */
-exports.Fixtures.prototype.clearAndLoad = function clearAndLoadFixtures(data, results) {
+exports.Graphixture.prototype.clearAndLoad = function clearAndLoadFixtures(data, results) {
   var self = this;
   return self.clear().then(function() {
     return self.load(data, results);
