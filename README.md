@@ -1,6 +1,6 @@
 ## Usage
 
-To use, you need an adapter. Sequelize and Bookshelf adapters are provided.
+To use, you need an adapter. An adapter for [Bookshelf](http://bookshelfjs.org/) is provided, and a probably highly broken skeleton for a [Sequelize](http://sequelizejs.com) adapter is also in the repository.
 
     var adapter = require('graphixture/bookshelf.adapter');
 
